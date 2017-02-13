@@ -1,0 +1,160 @@
+Peano Numbers
+
+---
+
+We can define the natural numbers as either zero or the successor
+of another natural number. In types it looks like this
+
+```
+sealed trait Nat
+trait Zero extends Nat
+trait Succ[N <: Nat] extends Nat
+```
+
+---
+
+and give them some names for convenience
+
+```
+type _0 = Zero
+type _1 = Succ[_0]
+type _2 = Succ[_1]
+type _3 = Succ[_2]
+type _4 = Succ[_3]
+type _5 = Succ[_4]
+type _6 = Succ[_5]
+type _7 = Succ[_6]
+type _8 = Succ[_7]
+type _9 = Succ[_8]
+```
+
+---
+Let us define some properties for \gNat\s. First we define a property
+which tells us if a number is a successor. This should be true for
+all numbers but zero
+
+
+```
+trait IsSucc[N <: Nat]
+
+implicit def natSucc[Pred <: Nat]: IsSucc[Succ[Pred]] =
+  new IsSucc[Succ[Pred]] {}
+```
+
+---
+Then we want to compare numbers. Let's start with greater than.
+
+
+```
+trait GT[A <: Nat, B <: Nat]
+```
+--
+
+the base case
+
+```
+implicit def gtZero[A <: Nat](implicit ev: IsSucc[A]) =
+  new GT[A, Zero] {}
+```
+--
+
+the inductive step
+
+```
+implicit def gtPred[A <: Nat, B <: Nat](implicit ev: GT[A, B]) =
+  new GT[Succ[A], Succ[B]] {}
+```
+
+---
+Ex: the opposite operation - lesser than - without using IsSucc
+
+--
+```
+trait LT[A <: Nat, B <: Nat]
+
+implicit def ltZero[A <: Nat] = new LT[Zero, Succ[A]] {}
+
+implicit def ltPred[A <: Nat, B <: Nat](implicit
+  ev: LT[A, B]) = new LT[Succ[A], Succ[B]] {}
+```
+
+---
+And last but not least equality
+
+```
+trait Eq[X <: Nat, Y <: Nat]
+
+implicit def eq[X <: Nat] = new Eq[X, X] {}
+```
+
+---
+Let us look at the implicit natSucc from another angle.
+As a reminder this was the definition
+
+
+```
+implicit def natSucc[Pred <: Nat]: IsSucc[Succ[Pred]] =
+  new IsSucc[Succ[Pred]] {}
+```
+
+
+If we try to prove IsSucc[N] then the compiler actually found the predecessor
+M of N in natSucc[M]. So lets try to keep this knowledge.
+
+--
+
+```
+trait Pred[N <: Nat] {
+  type Out <: Nat
+}
+
+object Pred {
+  type Aux[N <: Nat, M <: Nat] = Pred[N] { type Out = M }
+
+  implicit def pred[M <: Nat] = new Pred[Succ[M]] { type Out = M }
+}
+```
+
+
+btw: we should put the implicitis into the companion object
+---
+Exercise?
+
+
+```
+trait Diff[A <: Nat, B <: Nat] {
+  type Out <: Nat
+}
+```
+
+
+Hint 1: Aux
+
+Hint 2: Base cases
+--
+
+
+```
+trait Diff[A <: Nat, B <: Nat] {
+  type Out <: Nat
+}
+
+object Diff {
+  type Aux[A <: Nat, B <: Nat, Out0 <: Nat] =
+    Diff[A, B] { type Out = Out0 }
+
+  implicit def diffZero[A <: Nat] =
+    new Diff[A, Zero] { type Out = A }
+
+  implicit def diffPred[A <: Nat, B <: Nat, C <: Nat](implicit
+      ev: Diff.Aux[A, B, C]) =
+    new Diff[Succ[A], Succ[B]] { type Out = C }
+}
+
+```
+--
+
+```
+def getDiff[A <: Nat, B <: Nat](implicit ev: Diff[A, B]): ev.Out = ???
+```
+
