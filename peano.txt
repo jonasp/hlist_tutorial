@@ -29,9 +29,8 @@ type _9 = Succ[_8]
 ```
 
 ---
-Let us define some properties for \gNat\s. First we define a property
-which tells us if a number is a successor. This should be true for
-all numbers but zero
+Let us define some properties for \gNat\s. First we want to know if a
+number is a successor. This should be true for all numbers but zero
 
 
 ```
@@ -66,7 +65,7 @@ implicit def gtPred[A <: Nat, B <: Nat](implicit ev: GT[A, B]) =
 ```
 
 ---
-Ex: the opposite operation - lesser than - without using IsSucc
+Exericise 2: the opposite operation - lesser than - without using IsSucc
 
 --
 ```
@@ -118,7 +117,7 @@ object Pred {
 
 btw: we should put the implicitis into the companion object
 ---
-Exercise?
+Exercise 3: Type function which outputs the difference of two numbers.
 
 
 ```
@@ -143,18 +142,12 @@ object Diff {
   type Aux[A <: Nat, B <: Nat, Out0 <: Nat] =
     Diff[A, B] { type Out = Out0 }
 
-  implicit def diffZero[A <: Nat] =
+  implicit def diffZero[A <: Nat]: Aux[A, Zero, A] =
     new Diff[A, Zero] { type Out = A }
 
-  implicit def diffPred[A <: Nat, B <: Nat, C <: Nat](implicit
-      ev: Diff.Aux[A, B, C]) =
+  implicit def diffPred[A <: Nat, B <: Nat, C <: Nat](
+      implicit ev: Diff.Aux[A, B, C]): Aux[Succ[A], Succ[B], C] =
     new Diff[Succ[A], Succ[B]] { type Out = C }
 }
 
 ```
---
-
-```
-def getDiff[A <: Nat, B <: Nat](implicit ev: Diff[A, B]): ev.Out = ???
-```
-
